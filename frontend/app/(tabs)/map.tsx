@@ -396,8 +396,9 @@ export default function MapScreen() {
         else apiMode = "car";
       }
 
-      // ─── FIX: se c'è un numero civico, geocodifica le coordinate precise ───
-      const { coords: finalDestCoords, precise } = civico.trim()
+      // ─── FIX: se c'è un numero civico (digitato separatamente o direttamente), geocodifica le coordinate precise ───
+      const hasDirectCivico = /\b\d+(?:\/[A-Za-z0-9]+)?\b/.test(destination);
+      const { coords: finalDestCoords, precise } = (civico.trim() || hasDirectCivico)
         ? await geocodeCivico(fullDest, selectedDestCoords)
         : { coords: selectedDestCoords, precise: true };
 

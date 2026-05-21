@@ -95,8 +95,7 @@ function findClosestPointIndex(p: [number, number], poly: [number, number][]) {
   if (!poly || poly.length < 2) return 0;
   let minDist = Infinity;
   let index = 0;
-  const limit = Math.min(poly.length - 1, 100);
-  for (let i = 0; i < limit; i++) {
+  for (let i = 0; i < poly.length - 1; i++) {
     const d = distanceToSegment(p, poly[i], poly[i + 1]);
     if (d < minDist) { minDist = d; index = i; }
   }
@@ -106,8 +105,7 @@ function findClosestPointIndex(p: [number, number], poly: [number, number][]) {
 function getMinDistanceToPath(p: [number, number], poly: [number, number][]): number {
   if (!poly || poly.length < 2) return 0;
   let minDist = Infinity;
-  const limit = Math.min(poly.length - 1, 20); // check first 20 segments to be highly efficient
-  for (let i = 0; i < limit; i++) {
+  for (let i = 0; i < poly.length - 1; i++) {
     const d = distanceToSegment(p, poly[i], poly[i + 1]);
     if (d < minDist) minDist = d;
   }
@@ -223,10 +221,12 @@ export default function Navigation() {
     if (!mounted) return;
     let cleanup: (() => void) | null = null;
 
-    const handlePosition = (pos: [number, number], spd: number, gpsHeading: number | null) => {
+    const handlePosition = (pos: [number, number], spd: number, gpsHeading: number | null, isSimulated = false) => {
       if (!pos || typeof pos[0] !== 'number') return;
-      lastGpsUpdateRef.current = Date.now();
-      setIsGpsLost(false);
+      if (!isSimulated) {
+        lastGpsUpdateRef.current = Date.now();
+        setIsGpsLost(false);
+      }
       // 1. Bearing Calculation
       let targetBearing = lastBearingRef.current;
       if (lastLocRef.current && haversine(lastLocRef.current, pos) > 1.0) {
@@ -339,7 +339,7 @@ export default function Navigation() {
         
         const nextPos = advancePositionAlongPolyline(lastLocRef.current, distMeters, polylineRef.current);
         if (nextPos) {
-          handlePosition(nextPos, speedRef.current, lastBearingRef.current);
+          handlePosition(nextPos, speedRef.current, lastBearingRef.current, true);
           // Aggiorna il finto timestamp per il passo successivo
           lastGpsUpdateRef.current = now;
         }

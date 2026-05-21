@@ -339,7 +339,7 @@ export const geocodeCivico = async (
   }
 
   // Tentativo 4: Solo via e città
-  const streetOnly = query.replace(/,\s*\d+/, "").trim();
+  const streetOnly = query.replace(/(?:,\s*)?\b\d+(?:\/[A-Za-z0-9]+)?\b/g, "").trim();
   const result3 = await tryGeocode(streetOnly);
   if (result3) {
     console.warn("📍 Civico non trovato, uso posizione via:", streetOnly);

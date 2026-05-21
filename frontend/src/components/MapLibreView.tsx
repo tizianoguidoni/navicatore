@@ -236,7 +236,6 @@ const SHARED_MAP_SCRIPT = `
       }
     } catch(e) { console.warn('Route update error:', e); }
   }
-  window.updateRoute = updateRoute;
 
   function updateReports(reports) {
     if (!map || !map.isStyleLoaded()) return;
@@ -289,6 +288,11 @@ const SHARED_MAP_SCRIPT = `
   function updateState(lng, lat, zoom, pitch, bearing) {
     targetPos = [lng, lat]; targetZoom = zoom; targetPitch = pitch; targetBearing = bearing;
   }
+
+  window.updateRoute = updateRoute;
+  window.updateReports = updateReports;
+  window.updateDest = updateDest;
+  window.updateState = updateState;
 `;
 
 // ─── WEB VERSION ─────────────────────────────────────────────────────────
@@ -390,6 +394,7 @@ if (Platform.OS !== 'web') {
       }
     }));
 
+    // 1. Aggiornamento in tempo reale dello stato (posizione, orientamento, zoom, pitch)
     useEffect(() => {
       if (typeof center?.[0] === 'number' && typeof center?.[1] === 'number') {
         const script = `if (window.updateState) updateState(${center[0]}, ${center[1]}, ${zoom}, ${pitch}, ${bearing}); true;`;
@@ -397,36 +402,71 @@ if (Platform.OS !== 'web') {
       }
     }, [center?.[0], center?.[1], zoom, pitch, bearing]);
 
+    // 2. Aggiornamento in tempo reale della rotta (con controllo stringa per evitare bridge choking)
+    const lastRouteStrRef = useRef<string>("");
     useEffect(() => {
       if (Array.isArray(route)) {
-        const script = `if (window.updateRoute) updateRoute(${JSON.stringify(route)}); true;`;
-        webViewRef.current?.injectJavaScript(script);
+        const rStr = JSON.stringify(route);
+        if (rStr !== lastRouteStrRef.current) {
+          lastRouteStrRef.current = rStr;
+          const script = `if (window.updateRoute) updateRoute(${rStr}); true;`;
+          webViewRef.current?.injectJavaScript(script);
+        }
       }
     }, [route]);
 
-    const safeRoute = JSON.stringify(route).replace(/'/g, "\\'");
-    const safeReports = JSON.stringify(reports).replace(/'/g, "\\'");
-    const safeDest = JSON.stringify(destCoord).replace(/'/g, "\\'");
-    const safeLabel = (destLabel || "").replace(/'/g, "\\'");
+    // 3. Aggiornamento in tempo reale delle segnalazioni
+    useEffect(() => {
+      const script = `if (window.updateReports) updateReports(${JSON.stringify(reports)}); true;`;
+      webViewRef.current?.injectJavaScript(script);
+    }, [reports]);
 
-    const html = `
-      <!DOCTYPE html><html><head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-        <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-        <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
-        <style>${MAP_STYLES}</style>
-      </head><body><div id="map"></div>
-      <script>
-        ${SHARED_MAP_SCRIPT}
-        initMap(
-          'map',
-          [${center[0]}, ${center[1]}], ${zoom}, ${pitch}, ${bearing}, 
-          '${safeRoute}', '${safeReports}', '${safeDest}', '${safeLabel}'
-        );
-      </script></body></html>
-    `;
+    // 4. Aggiornamento in tempo reale della destinazione e del civico
+    useEffect(() => {
+      const script = `if (window.updateDest) updateDest(${JSON.stringify(destCoord || null)}, ${JSON.stringify(destLabel || "")}); true;`;
+      webViewRef.current?.injectJavaScript(script);
+    }, [destCoord, destLabel]);
 
-    return (<View style={styles.container} pointerEvents="auto"><WebView ref={webViewRef} source={{ html }} scrollEnabled={true} style={{ flex: 1, backgroundColor: '#0A0A0A' }} javaScriptEnabled={true} domStorageEnabled={true} startInLoadingState={true} onMessage={(event) => {}} /></View>);
+    // 5. Memoizzazione dell'HTML di avvio (calcolato UNA sola volta all'avvio del componente)
+    const htmlRef = useRef<string | null>(null);
+    if (!htmlRef.current) {
+      const safeRoute = JSON.stringify(route).replace(/'/g, "\\'");
+      const safeReports = JSON.stringify(reports).replace(/'/g, "\\'");
+      const safeDest = JSON.stringify(destCoord || null).replace(/'/g, "\\'");
+      const safeLabel = (destLabel || "").replace(/'/g, "\\'");
+
+      htmlRef.current = `
+        <!DOCTYPE html><html><head>
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+          <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+          <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+          <style>${MAP_STYLES}</style>
+        </head><body><div id="map"></div>
+        <script>
+          ${SHARED_MAP_SCRIPT}
+          initMap(
+            'map',
+            [${center[0]}, ${center[1]}], ${zoom}, ${pitch}, ${bearing}, 
+            '${safeRoute}', '${safeReports}', '${safeDest}', '${safeLabel}'
+          );
+        </script></body></html>
+      `;
+    }
+
+    return (
+      <View style={styles.container} pointerEvents="auto">
+        <WebView 
+          ref={webViewRef} 
+          source={{ html: htmlRef.current }} 
+          scrollEnabled={true} 
+          style={{ flex: 1, backgroundColor: '#0A0A0A' }} 
+          javaScriptEnabled={true} 
+          domStorageEnabled={true} 
+          startInLoadingState={true} 
+          onMessage={(event) => {}} 
+        />
+      </View>
+    );
   });
   MapLibreNativeView.displayName = 'MapLibreNativeView';
 }
