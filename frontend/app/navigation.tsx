@@ -403,7 +403,7 @@ export default function Navigation() {
           {params.isFallback === "1" && (
             <View style={styles.fallbackBadge}>
               <Ionicons name="cloud-offline" size={12} color="#FF9500" />
-              <Text style={styles.fallbackText}>TRAFFICO NON DISPONIBILE (OFFLINE)</Text>
+              <Text style={styles.fallbackText}>TRAFFICO IN PROGRAMMAZIONE</Text>
             </View>
           )}
           {isGpsLost && (

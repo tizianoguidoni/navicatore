@@ -191,7 +191,12 @@ const SHARED_MAP_SCRIPT = `
     map.on('load', function() {
       map.addLayer({
         'id': '3d-buildings', 'source': 'openmaptiles', 'source-layer': 'building', 'type': 'fill-extrusion', 'minzoom': 15,
-        'paint': { 'fill-extrusion-color': '#333', 'fill-extrusion-height': ['get', 'render_height'], 'fill-extrusion-base': ['get', 'render_min_height'], 'fill-extrusion-opacity': 0.6 }
+        'paint': { 
+          'fill-extrusion-color': '#333', 
+          'fill-extrusion-height': ['number', ['get', 'render_height'], 15], 
+          'fill-extrusion-base': ['number', ['get', 'render_min_height'], 0], 
+          'fill-extrusion-opacity': 0.6 
+        }
       });
 
       var accEl = document.createElement('div');
@@ -224,7 +229,10 @@ const SHARED_MAP_SCRIPT = `
       if (typeof route === 'string') route = JSON.parse(route);
     } catch(e) { return; }
     currentRoute = route;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !map.isStyleLoaded()) {
+      setTimeout(function() { updateRoute(route); }, 100);
+      return;
+    }
     var data = { type: 'Feature', geometry: { type: 'LineString', coordinates: route } };
     try {
       if (map.getSource('route')) {
@@ -238,7 +246,14 @@ const SHARED_MAP_SCRIPT = `
   }
 
   function updateReports(reports) {
-    if (!map || !map.isStyleLoaded()) return;
+    if (!reports) return;
+    try {
+      if (typeof reports === 'string') reports = JSON.parse(reports);
+    } catch(e) { return; }
+    if (!map || !map.isStyleLoaded()) {
+      setTimeout(function() { updateReports(reports); }, 100);
+      return;
+    }
     var features = reports.map(function(r) { return { type: 'Feature', properties: { type: r.type }, geometry: { type: 'Point', coordinates: [r.lng, r.lat] } }; });
     var data = { type: 'FeatureCollection', features: features };
     if (map.getSource('reports')) {
@@ -250,8 +265,15 @@ const SHARED_MAP_SCRIPT = `
   }
 
   function updateDest(dest, label) {
-    if (!dest || !map || !map.isStyleLoaded()) { 
+    if (!dest) { 
       if (destMarker) { destMarker.remove(); destMarker = null; }
+      return; 
+    }
+    try {
+      if (typeof dest === 'string') dest = JSON.parse(dest);
+    } catch(e) {}
+    if (!map || !map.isStyleLoaded()) { 
+      setTimeout(function() { updateDest(dest, label); }, 100);
       return; 
     }
     
@@ -463,7 +485,7 @@ if (Platform.OS !== 'web') {
           javaScriptEnabled={true} 
           domStorageEnabled={true} 
           startInLoadingState={true} 
-          onMessage={(event) => {}} 
+          onMessage={() => {}} 
         />
       </View>
     );

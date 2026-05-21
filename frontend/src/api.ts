@@ -40,6 +40,7 @@ export type VehicleProfile = {
   width_m?: number;
   length_m?: number;
   weight_kg?: number;
+  weight?: number;
   driving_mode?: "fast" | "safe" | "eco" | "scenic" | string;
 };
 
@@ -218,6 +219,7 @@ export interface GeocodeResult {
   importance: number;
   source: "photon" | "nominatim" | "mapbox";
   type?: string;
+  score?: number;
 }
 
 /**
@@ -327,7 +329,7 @@ export const geocodeCivico = async (
 
   // Tentativo 2: Advanced Geocode (Photon/Nominatim blend)
   const advanced = await advancedGeocode(query);
-  if (advanced.length > 0 && advanced[0].score > 0.8) {
+  if (advanced.length > 0 && advanced[0] && (advanced[0].score ?? 0) > 0.8) {
     return { coords: [advanced[0].lon, advanced[0].lat], precise: true };
   }
 
@@ -349,18 +351,124 @@ export const geocodeCivico = async (
   return { coords: fallbackCoords, precise: false };
 };
 
+function parseItalianAddress(query: string): { street: string; houseNumber: string; city: string; postalcode?: string } | null {
+  try {
+    // Rimuove l'Italia se presente alla fine
+    let cleanQuery = query.replace(/,\s*(?:Italia|Italy)\b/gi, "").trim();
+
+    // Dividiamo per virgola
+    const parts = cleanQuery.split(',').map(p => p.trim()).filter(Boolean);
+
+    let street = "";
+    let houseNumber = "";
+    let city = "";
+    let postalcode = "";
+
+    // Proviamo a estrarre il codice postale (5 cifre consecutive)
+    const zipRegex = /\b(\d{5})\b/;
+    for (let i = 0; i < parts.length; i++) {
+      const zipMatch = parts[i].match(zipRegex);
+      if (zipMatch) {
+        postalcode = zipMatch[1];
+        parts[i] = parts[i].replace(zipRegex, "").trim();
+      }
+    }
+
+    // Ricostruiamo i parts filtrando i vuoti prodotti dalla rimozione del cap
+    const cleanParts = parts.map(p => p.trim()).filter(Boolean);
+
+    // Se dopo aver diviso abbiamo 3 o più parti principali, es: ["Via Roma", "15", "Milano"]
+    if (cleanParts.length >= 3) {
+      let civicoIndex = -1;
+      for (let i = 0; i < cleanParts.length; i++) {
+        if (/^\d+(?:\/[A-Za-z0-9]+)?$/.test(cleanParts[i])) {
+          civicoIndex = i;
+          break;
+        }
+      }
+
+      if (civicoIndex !== -1) {
+        houseNumber = cleanParts[civicoIndex];
+        street = cleanParts.slice(0, civicoIndex).join(", ");
+        city = cleanParts.slice(civicoIndex + 1).join(", ").replace(/\b[A-Z]{2}\b/g, "").trim();
+      }
+    }
+
+    // Se non abbiamo trovato il civico in quel modo, ma abbiamo 2 o più parti, es: ["Via Roma 15", "Milano"]
+    if (!houseNumber && cleanParts.length >= 2) {
+      const streetMatch = cleanParts[0].match(/^(.*?)\b(\d+(?:\/[A-Za-z0-9]+)?)$/);
+      if (streetMatch) {
+        street = streetMatch[1].trim();
+        houseNumber = streetMatch[2].trim();
+        city = cleanParts.slice(1).join(", ").replace(/\b[A-Z]{2}\b/g, "").trim();
+      } else {
+        const secondPartMatch = cleanParts[1].match(/^(\d+(?:\/[A-Za-z0-9]+)?)\s+(.*)$/);
+        if (secondPartMatch) {
+          street = cleanParts[0];
+          houseNumber = secondPartMatch[1].trim();
+          city = secondPartMatch[2].replace(/\b[A-Z]{2}\b/g, "").trim();
+        }
+      }
+    }
+
+    // Se non abbiamo ancora trovato il civico, proviamo una ricerca regex su tutta la stringa
+    if (!houseNumber) {
+      const match = cleanQuery.match(/^(via|corso|viale|piazza|largo|strada|vicolo|galleria|bastioni|circonvallazione|mura|salita|discesa|vico|traversa)\s+(.*?)\b(\d+(?:\/[A-Za-z0-9]+)?)\b\s+(.*)$/i);
+      if (match) {
+        street = `${match[1]} ${match[2]}`.trim();
+        houseNumber = match[3].trim();
+        city = match[4].replace(/\b[A-Z]{2}\b/g, "").trim();
+      }
+    }
+
+    // Pulizia finale dei caratteri spuri
+    street = street.trim().replace(/,$/, "").trim();
+    city = city.trim().replace(/^,/, "").trim();
+
+    if (street && houseNumber && city) {
+      return { street, houseNumber, city, postalcode: postalcode || undefined };
+    }
+  } catch (err) {
+    console.warn("Error parsing address:", err);
+  }
+  return null;
+}
+
 const tryGeocode = async (
   query: string
 ): Promise<[number, number] | null> => {
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=1&countrycodes=it`;
+    const parsed = parseItalianAddress(query);
+    let url = "";
+    if (parsed) {
+      const { street, houseNumber, city, postalcode } = parsed;
+      url = `https://nominatim.openstreetmap.org/search?street=${encodeURIComponent(street + ' ' + houseNumber)}&city=${encodeURIComponent(city)}${postalcode ? '&postalcode=' + encodeURIComponent(postalcode) : ''}&format=json&addressdetails=1&limit=1&countrycodes=it`;
+      console.log("Structured Nominatim URL:", url);
+    } else {
+      url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=1&countrycodes=it`;
+      console.log("Standard Nominatim URL:", url);
+    }
+
     const res = await fetch(url, {
       headers: { "Accept-Language": "it", "User-Agent": "VyroApp/1.0" }
     });
     const data = await res.json();
-    if (data.length > 0) return [parseFloat(data[0].lon), parseFloat(data[0].lat)];
+    if (data && data.length > 0) return [parseFloat(data[0].lon), parseFloat(data[0].lat)];
+
+    // Se la ricerca strutturata fallisce, proviamo come fallback la ricerca standard
+    if (parsed) {
+      console.log("Structured search failed or found nothing, trying standard text query fallback...");
+      const fallbackUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=1&countrycodes=it`;
+      const fbRes = await fetch(fallbackUrl, {
+        headers: { "Accept-Language": "it", "User-Agent": "VyroApp/1.0" }
+      });
+      const fbData = await fbRes.json();
+      if (fbData && fbData.length > 0) return [parseFloat(fbData[0].lon), parseFloat(fbData[0].lat)];
+    }
+
     return null;
-  } catch {
+  } catch (err) {
+    console.warn("Nominatim fetch failed, using fallback:", err);
     return null;
   }
 };
