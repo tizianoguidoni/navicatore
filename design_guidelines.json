@@ -1,0 +1,163 @@
+{
+  "project_name": "VYRO",
+  "domain": "Mobile Navigation & Community Routing (PWA/Hybrid App)",
+  "theme": {
+    "mode": "dark",
+    "archetype": "Archetype 2: The Performance Pro (Tactical HUD & Gamified)",
+    "description": "A high-visibility, command-center aesthetic inspired by modern gaming HUDs and tactical vehicle navigation. Uses deep obsidian backgrounds with high-contrast neon accents for route clarity, avoiding cliché purples and teals."
+  },
+  "colors": {
+    "background": {
+      "base": "#0A0A0A",
+      "surface": "#121212",
+      "overlay": "rgba(0, 0, 0, 0.7)"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#A1A1AA",
+      "muted": "#52525B"
+    },
+    "brand": {
+      "primary": "#EAB308",
+      "primary_hover": "#FACC15",
+      "secondary": "#84CC16",
+      "accent": "#06B6D4"
+    },
+    "status": {
+      "danger": "#EF4444",
+      "warning": "#F97316",
+      "success": "#22C55E",
+      "info": "#3B82F6"
+    },
+    "navigation_route": {
+      "active_path": "#84CC16",
+      "heavy_traffic": "#EF4444",
+      "moderate_traffic": "#F97316"
+    }
+  },
+  "typography": {
+    "headings": {
+      "family": "Barlow Condensed, sans-serif",
+      "weights": ["700", "900"],
+      "styling": "uppercase, tracking-tight, high-impact"
+    },
+    "body": {
+      "family": "Manrope, sans-serif",
+      "weights": ["400", "500", "600", "700"],
+      "styling": "increased tracking for legibility at small sizes"
+    },
+    "data_display": {
+      "family": "JetBrains Mono, monospace",
+      "usage": "ETA, Speedometer, Distance metrics"
+    },
+    "scales": {
+      "h1": "text-4xl md:text-5xl font-black tracking-tighter uppercase",
+      "h2": "text-2xl md:text-3xl font-bold tracking-tight uppercase",
+      "h3": "text-xl font-bold tracking-tight",
+      "body": "text-base leading-relaxed",
+      "small": "text-sm text-zinc-400",
+      "overline": "text-xs font-bold tracking-[0.2em] uppercase text-zinc-500"
+    }
+  },
+  "spacing_and_layout": {
+    "philosophy": "Tactical Minimalism. Every element is deliberate, optimizing for one-handed thumb use and rapid glanceability.",
+    "scale": {
+      "container_padding": "p-4 md:p-6",
+      "gap_tight": "gap-2",
+      "gap_standard": "gap-4",
+      "gap_loose": "gap-8"
+    },
+    "borders": {
+      "radius": "rounded-xl for cards, rounded-full for buttons/avatars, rounded-3xl for bottom sheets",
+      "width": "border border-zinc-800",
+      "style": "1px solid strokes preferred over soft shadows to define edges in low light"
+    }
+  },
+  "surface_strategies": {
+    "hud_elements": {
+      "description": "Floating panels over the map (ETA, speed, next turn)",
+      "classes": "backdrop-blur-2xl bg-black/60 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] rounded-2xl"
+    },
+    "bottom_navigation": {
+      "description": "Main app routing",
+      "classes": "fixed bottom-0 w-full bg-zinc-950 border-t border-zinc-800 pb-safe pt-2 px-4 flex justify-between items-center z-50"
+    },
+    "bottom_sheet": {
+      "description": "Interactive slide-up panels (Community Reports, Garage)",
+      "classes": "bg-zinc-900 border-t border-zinc-800 rounded-t-3xl shadow-2xl"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-yellow-500 text-black font-bold uppercase tracking-wide hover:bg-yellow-400 active:scale-95 transition-all rounded-full px-6 py-3",
+      "secondary": "bg-zinc-800 text-white font-medium hover:bg-zinc-700 active:scale-95 transition-all rounded-full px-6 py-3 border border-zinc-700",
+      "fab_report": "bg-red-500 text-white shadow-lg shadow-red-500/30 rounded-full w-14 h-14 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+    },
+    "cards": {
+      "vehicle_profile": "bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col gap-3 hover:border-yellow-500/50 transition-colors cursor-pointer",
+      "report_item": "bg-zinc-900/80 rounded-xl p-4 border border-zinc-800 flex gap-4 items-start"
+    },
+    "gamification": {
+      "xp_bar": "h-2 w-full bg-zinc-800 rounded-full overflow-hidden relative",
+      "xp_fill": "absolute left-0 top-0 h-full bg-gradient-to-r from-yellow-500 to-lime-500",
+      "badge": "w-16 h-16 rounded-xl border-2 border-zinc-800 bg-zinc-900 flex items-center justify-center shadow-[inset_0_0_15px_rgba(255,255,255,0.05)] text-2xl"
+    }
+  },
+  "media_assets": {
+    "backgrounds": {
+      "map_dark": {
+        "url": "https://images.unsplash.com/photo-1584735414166-8c436d5854ac?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTN8MHwxfHNlYXJjaHwyfHxkYXJrJTIwbWFwJTIwbmF2aWdhdGlvbiUyMHVpfGVufDB8fHx8MTc3NzU1MzkxOXww&ixlib=rb-4.1.0&q=85",
+        "description": "Dark abstract map representation, use as background behind routing UI when actual map component is mocked."
+      },
+      "driving_ambience": {
+        "url": "https://images.pexels.com/photos/5322558/pexels-photo-5322558.jpeg",
+        "description": "Neon-lit night driving scene, useful for onboarding screens or premium upsell background."
+      }
+    },
+    "vehicles": {
+      "sports_car": {
+        "url": "https://images.unsplash.com/photo-1759926953612-e48779f26629?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjh8MHwxfHNlYXJjaHwxfHxzcG9ydHMlMjBjYXIlMjBuZW9uJTIwZGFya3xlbnwwfHx8fDE3Nzc1NTM5MTl8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Sports car driving through neon tunnel, use for Garage/Vehicle selector."
+      }
+    },
+    "gamification": {
+      "avatars": [
+        {
+          "url": "https://images.pexels.com/photos/7849511/pexels-photo-7849511.jpeg",
+          "description": "Gamer profile avatar for user settings and leaderboard."
+        },
+        {
+          "url": "https://images.pexels.com/photos/28114093/pexels-photo-28114093.jpeg",
+          "description": "Secondary avatar for leaderboard competitors."
+        }
+      ],
+      "badges": {
+        "url": "https://images.unsplash.com/photo-1738683959505-3739fea6b94f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDR8MHwxfHNlYXJjaHwxfHxuZW9uJTIwYmFkZ2UlMjBpY29ufGVufDB8fHx8MTc3NzU1MzkxOXww&ixlib=rb-4.1.0&q=85",
+        "description": "Diamond shapes on black background, use for XP/Level badges."
+      }
+    }
+  },
+  "testing_attributes": {
+    "requirement": "All interactive elements MUST include data-testid. Examples below:",
+    "examples": [
+      "data-testid='nav-tab-map'",
+      "data-testid='nav-tab-garage'",
+      "data-testid='report-hazard-fab'",
+      "data-testid='start-navigation-btn'",
+      "data-testid='vehicle-selector-truck'"
+    ]
+  },
+  "motion_and_interactions": {
+    "routing": "Use stroke-dashoffset animation for drawing the route line on the map.",
+    "sheets": "Framer motion spring physics for bottom sheets (stiffness: 300, damping: 30).",
+    "gamification": "Number counter animation for XP gains, slight pop/scale effect when badges are earned."
+  },
+  "instructions_to_main_agent": [
+    "This is a web-based replica of a React Native mobile app. Use a mobile-first constrained layout (e.g., max-w-md mx-auto h-screen relative overflow-hidden bg-black) to simulate the phone screen.",
+    "Implement a fixed Bottom Navigation bar for tab switching (Map, Community, Garage, Profile).",
+    "Use Lucide-React or Phosphor Icons for tactical UI iconography (crosshairs, map pins, alerts).",
+    "For the Map screen, mock the actual map with the provided dark map background image, and overlay UI components (HUD) using absolute positioning with glassmorphism classes.",
+    "Avoid standard Vercel/Shadcn aesthetics. Use the provided 1px borders, dark zinc backgrounds, and neon yellow/green accents.",
+    "Ensure headings use uppercase tracking-tight utilities to match the 'Barlow Condensed' tactical feel, even if using fallback sans-serif fonts."
+  ]
+}
