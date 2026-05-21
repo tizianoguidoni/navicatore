@@ -270,6 +270,7 @@ export async function advancedGeocode(query: string, userLoc?: [number, number])
 
     // FILTRAGGIO E RANKING INTELLIGENTE
     const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+    const GENERIC_TERMS = new Set(['via', 'viale', 'corso', 'piazza', 'largo', 'strada', 'vicolo', 'vico', 'traversa', 'salita', 'discesa', 'piazzetta', 'mura', 'bastioni', 'ponte', 'cda', 'contrada', 'snc']);
 
     return results
       .filter((v, i, a) => a.findIndex(t => t.lat === v.lat && t.lon === v.lon) === i) // Deduplicazione
@@ -279,7 +280,12 @@ export async function advancedGeocode(query: string, userLoc?: [number, number])
 
         // Boost per match con parole chiave della query (es. nome via)
         queryWords.forEach(word => {
-          if (nameLower.includes(word)) score += 0.2;
+          if (nameLower.includes(word)) {
+            // Se la parola chiave è un termine generico o un numero (es. cap o civico), diamo un boost piccolo (0.1)
+            // Altrimenti, se è il nome specifico della via (es. "ginosa"), diamo un boost enorme (1.5) per preferire la via corretta!
+            const isGeneric = GENERIC_TERMS.has(word) || /^\d+$/.test(word);
+            score += isGeneric ? 0.1 : 1.5;
+          }
         });
 
         // Boost enorme se contiene un numero civico quando richiesto
